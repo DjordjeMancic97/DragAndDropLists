@@ -39,6 +39,12 @@ class DragAndDropListExpansion implements DragAndDropListExpansionInterface {
   @override
   final Key? key;
 
+  @override
+  final Material? listFeedback;
+
+  @override
+  EdgeInsetsGeometry? margin;
+
   /// Disable to borders displayed at the top and bottom when expanded
   final bool disableTopAndBottomBorders;
 
@@ -61,6 +67,7 @@ class DragAndDropListExpansion implements DragAndDropListExpansionInterface {
     this.canDrag = true,
     this.key,
     this.disableTopAndBottomBorders = false,
+    this.listFeedback,
   }) {
     _expanded.value = initiallyExpanded;
   }
@@ -214,7 +221,8 @@ class DragAndDropListExpansion implements DragAndDropListExpansionInterface {
   late Timer _expansionTimer;
 
   _startExpansionTimer() async {
-    _expansionTimer = Timer(const Duration(milliseconds: 400), _expansionCallback);
+    _expansionTimer =
+        Timer(const Duration(milliseconds: 400), _expansionCallback);
   }
 
   _stopExpansionTimer() async {

@@ -4,7 +4,6 @@ import 'package:drag_and_drop_lists/drag_and_drop_item_target.dart';
 import 'package:drag_and_drop_lists/drag_and_drop_item_wrapper.dart';
 import 'package:drag_and_drop_lists/drag_and_drop_list_interface.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 class DragAndDropList implements DragAndDropListInterface {
   /// The widget that is displayed at the top of the list.
@@ -44,6 +43,12 @@ class DragAndDropList implements DragAndDropListInterface {
   @override
   final List<DragAndDropItem> children;
 
+  @override
+  final Material? listFeedback;
+
+  @override
+  EdgeInsetsGeometry? margin;
+
   /// Whether or not this item can be dragged.
   /// Set to true if it can be reordered.
   /// Set to false if it must remain fixed.
@@ -64,6 +69,8 @@ class DragAndDropList implements DragAndDropListInterface {
     this.horizontalAlignment = MainAxisAlignment.start,
     this.verticalAlignment = CrossAxisAlignment.start,
     this.canDrag = true,
+    this.listFeedback,
+    this.margin,
   });
 
   @override

@@ -32,7 +32,6 @@ class _DragAndDropListWrapper extends State<DragAndDropListWrapper>
   Widget build(BuildContext context) {
     Widget dragAndDropListContents =
         widget.dragAndDropList.generateWidget(widget.parameters);
-
     Widget draggable;
     if (widget.dragAndDropList.canDrag) {
       if (widget.parameters.listDragHandle != null) {
@@ -41,7 +40,7 @@ class _DragAndDropListWrapper extends State<DragAndDropListWrapper>
           child: widget.parameters.listDragHandle,
         );
 
-        Widget feedback =
+        Widget feedback = widget.dragAndDropList.listFeedback ??
             buildFeedbackWithHandle(dragAndDropListContents, dragHandle);
 
         draggable = MeasureSize(
@@ -90,7 +89,7 @@ class _DragAndDropListWrapper extends State<DragAndDropListWrapper>
         draggable = LongPressDraggable<DragAndDropListInterface>(
           data: widget.dragAndDropList,
           axis: draggableAxis(),
-          feedback:
+          feedback: widget.dragAndDropList.listFeedback ??
               buildFeedbackWithoutHandle(context, dragAndDropListContents),
           childWhenDragging: Container(),
           onDragStarted: () => _setDragging(true),
@@ -103,7 +102,7 @@ class _DragAndDropListWrapper extends State<DragAndDropListWrapper>
         draggable = Draggable<DragAndDropListInterface>(
           data: widget.dragAndDropList,
           axis: draggableAxis(),
-          feedback:
+          feedback: widget.dragAndDropList.listFeedback ??
               buildFeedbackWithoutHandle(context, dragAndDropListContents),
           childWhenDragging: Container(),
           onDragStarted: () => _setDragging(true),
@@ -202,7 +201,7 @@ class _DragAndDropListWrapper extends State<DragAndDropListWrapper>
 
     Widget toReturn = stack;
     if (widget.parameters.listPadding != null) {
-      toReturn = Padding(
+      toReturn = Container(
         padding: widget.parameters.listPadding!,
         child: stack,
       );
@@ -213,6 +212,13 @@ class _DragAndDropListWrapper extends State<DragAndDropListWrapper>
         child: Container(
           child: toReturn,
         ),
+      );
+    }
+
+    if (widget.dragAndDropList.margin != null) {
+      toReturn = Container(
+        margin: widget.dragAndDropList.margin,
+        child: toReturn,
       );
     }
 
