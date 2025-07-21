@@ -18,6 +18,16 @@ typedef OnListReordered = void Function(
   DragAndDropListInterface reorderedList,
   DragAndDropListInterface receiverList,
 );
+typedef OnItemDropOnContainer = void Function(
+  DragAndDropItem item,
+  int itemIndex,
+  int listIndex,
+);
+typedef ContainerItemOnWillAccept = bool Function(
+  DragAndDropItem? incoming,
+  int itemIndex,
+  int listIndex,
+);
 
 class DragAndDropBuilderParameters {
   final OnPointerMove? onPointerMove;
@@ -26,6 +36,8 @@ class DragAndDropBuilderParameters {
   final OnItemReordered? onItemReordered;
   final OnItemDropOnLastTarget? onItemDropOnLastTarget;
   final OnListReordered? onListReordered;
+  final OnItemDropOnContainer? onItemDropOnContainer;
+  final ContainerItemOnWillAccept? containerItemOnWillAccept;
   final ListOnWillAccept? listOnWillAccept;
   final ListTargetOnWillAccept? listTargetOnWillAccept;
   final OnListDraggingChanged? onListDraggingChanged;
@@ -56,6 +68,8 @@ class DragAndDropBuilderParameters {
   final DragHandle? itemDragHandle;
   final bool constrainDraggingAxis;
   final bool disableScrolling;
+  final Widget? containerItemGhost;
+  final double containerItemGhostOpacity;
 
   DragAndDropBuilderParameters({
     this.onPointerMove,
@@ -64,6 +78,8 @@ class DragAndDropBuilderParameters {
     this.onItemReordered,
     this.onItemDropOnLastTarget,
     this.onListReordered,
+    this.onItemDropOnContainer,
+    this.containerItemOnWillAccept,
     this.listDraggingWidth,
     this.listOnWillAccept,
     this.listTargetOnWillAccept,
@@ -94,5 +110,7 @@ class DragAndDropBuilderParameters {
     this.itemDragHandle,
     this.constrainDraggingAxis = true,
     this.disableScrolling = false,
+    this.containerItemGhost,
+    this.containerItemGhostOpacity = 0.3,
   });
 }

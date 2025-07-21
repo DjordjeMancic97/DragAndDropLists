@@ -46,8 +46,19 @@ typedef OnItemAdd = void Function(
   int listIndex,
   int newItemIndex,
 );
-typedef OnListAdd = void Function(DragAndDropListInterface newList, int newListIndex);
+typedef OnListAdd = void Function(
+    DragAndDropListInterface newList, int newListIndex);
 typedef OnListReorder = void Function(int oldListIndex, int newListIndex);
+typedef OnItemDropOnContainer = void Function(
+  DragAndDropItem item,
+  int itemIndex,
+  int listIndex,
+);
+typedef ContainerItemOnWillAccept = bool Function(
+  DragAndDropItem? incoming,
+  int itemIndex,
+  int listIndex,
+);
 typedef OnListDraggingChanged = void Function(
   DragAndDropListInterface? list,
   bool dragging,
@@ -156,6 +167,14 @@ class DragAndDropLists extends StatefulWidget {
   /// Called when an item dragging is starting or ending
   final OnItemDraggingChanged? onItemDraggingChanged;
 
+  /// Called when an item is dropped directly onto the main container
+  /// (not on a specific list). This allows items to be added to the container.
+  final OnItemDropOnContainer? onItemDropOnContainer;
+
+  /// Set in order to provide custom acceptance criteria for when an item can be
+  /// dropped onto the main container.
+  final ContainerItemOnWillAccept? containerItemOnWillAccept;
+
   /// Width of a list item when it is being dragged.
   final double? itemDraggingWidth;
 
@@ -165,6 +184,13 @@ class DragAndDropLists extends StatefulWidget {
 
   /// The opacity of the [itemGhost]. This must be between 0 and 1.
   final double itemGhostOpacity;
+
+  /// The widget that will be displayed at a potential drop position on the main container
+  /// when an item is being dragged over it.
+  final Widget? containerItemGhost;
+
+  /// The opacity of the [containerItemGhost]. This must be between 0 and 1.
+  final double containerItemGhostOpacity;
 
   /// Length of animation for the change in an item size when displaying the [itemGhost].
   final int itemSizeAnimationDurationMilliseconds;
@@ -279,7 +305,7 @@ class DragAndDropLists extends StatefulWidget {
   /// the vertical axis. By default this is set to true. This may be useful to
   /// disable when setting customDragTargets
   final bool constrainDraggingAxis;
-  
+
   /// If you put a widget before DragAndDropLists there's an unexpected padding
   /// before the list renders. This is the default behaviour for ListView which
   /// is used internally. To remove the padding, set this field to true
@@ -298,6 +324,8 @@ class DragAndDropLists extends StatefulWidget {
     this.listTargetOnWillAccept,
     this.listTargetOnAccept,
     this.onItemDraggingChanged,
+    this.onItemDropOnContainer,
+    this.containerItemOnWillAccept,
     this.itemOnWillAccept,
     this.itemOnAccept,
     this.itemTargetOnWillAccept,
@@ -305,6 +333,8 @@ class DragAndDropLists extends StatefulWidget {
     this.itemDraggingWidth,
     this.itemGhost,
     this.itemGhostOpacity = 0.3,
+    this.containerItemGhost,
+    this.containerItemGhostOpacity = 0.3,
     this.itemSizeAnimationDurationMilliseconds = 150,
     this.itemDragOnLongPress = true,
     this.itemDecorationWhileDragging,
@@ -339,9 +369,7 @@ class DragAndDropLists extends StatefulWidget {
     super.key,
   }) {
     if (listGhost == null &&
-        children
-            .whereType<DragAndDropListExpansionInterface>()
-            .isNotEmpty) {
+        children.whereType<DragAndDropListExpansionInterface>().isNotEmpty) {
       throw Exception(
           'If using DragAndDropListExpansion, you must provide a non-null listGhost');
     }
@@ -398,6 +426,8 @@ class DragAndDropListsState extends State<DragAndDropLists> {
       onPointerMove: _onPointerMove,
       onItemReordered: _internalOnItemReorder,
       onItemDropOnLastTarget: _internalOnItemDropOnLastTarget,
+      onItemDropOnContainer: widget.onItemDropOnContainer,
+      containerItemOnWillAccept: widget.containerItemOnWillAccept,
       onListReordered: _internalOnListReorder,
       onItemDraggingChanged: widget.onItemDraggingChanged,
       onListDraggingChanged: widget.onListDraggingChanged,
@@ -411,6 +441,8 @@ class DragAndDropListsState extends State<DragAndDropLists> {
       verticalAlignment: widget.verticalAlignment,
       axis: widget.axis,
       itemGhost: widget.itemGhost,
+      containerItemGhost: widget.containerItemGhost,
+      containerItemGhostOpacity: widget.containerItemGhostOpacity,
       listDecoration: widget.listDecoration,
       listDecorationWhileDragging: widget.listDecorationWhileDragging,
       listInnerDecoration: widget.listInnerDecoration,
@@ -450,6 +482,7 @@ class DragAndDropListsState extends State<DragAndDropLists> {
           child: outerListHolder,
         );
       }
+
       return outerListHolder;
     } else {
       return Center(
@@ -513,12 +546,51 @@ class DragAndDropListsState extends State<DragAndDropLists> {
   List<Widget> _buildOuterList(DragAndDropListTarget dragAndDropListTarget,
       DragAndDropBuilderParameters parameters) {
     bool includeSeparators = widget.listDivider != null;
-    int childrenCount = _calculateChildrenCount(includeSeparators);
+    List<Widget> widgets = [];
 
-    return List.generate(childrenCount, (index) {
-      return _buildInnerList(index, childrenCount, dragAndDropListTarget,
-          includeSeparators, parameters);
-    });
+    // Add container drop target at the beginning if callback is provided
+    if (widget.onItemDropOnContainer != null) {
+      widgets.add(_ContainerDropZone(
+        parameters: parameters,
+        lists: widget.children,
+        height: 90.0,
+      ));
+    }
+
+    // Add lists with container drop zones between them
+    for (int i = 0; i < widget.children.length; i++) {
+      widgets.add(DragAndDropListWrapper(
+        dragAndDropList: widget.children[i],
+        parameters: parameters,
+      ));
+
+      // Add separator if needed
+      if (includeSeparators && i < widget.children.length - 1) {
+        widgets.add(widget.listDivider!);
+      }
+
+      if (widget.onItemDropOnContainer != null) {
+        widgets.add(_ContainerDropZone(
+          parameters: parameters,
+          lists: widget.children,
+          height: 190.0,
+        ));
+      }
+    }
+
+    // Add container drop target at the end if callback is provided
+    if (widget.onItemDropOnContainer != null) {
+      widgets.add(_ContainerDropZone(
+        parameters: parameters,
+        lists: widget.children,
+        height: 190.0,
+      ));
+    }
+
+    // Add the final list target
+    widgets.add(dragAndDropListTarget);
+
+    return widgets;
   }
 
   int _calculateChildrenCount(bool includeSeparators) {
@@ -844,5 +916,101 @@ class DragAndDropListsState extends State<DragAndDropLists> {
   static Offset localToGlobal(RenderObject object, Offset point,
       {RenderObject? ancestor}) {
     return MatrixUtils.transformPoint(object.getTransformTo(ancestor), point);
+  }
+}
+
+/// Helper class to store item indices
+class _ItemIndices {
+  final int itemIndex;
+  final int listIndex;
+  const _ItemIndices(this.itemIndex, this.listIndex);
+}
+
+class _ContainerDropZone extends StatefulWidget {
+  final DragAndDropBuilderParameters parameters;
+  final List<DragAndDropListInterface> lists;
+  final double height;
+
+  const _ContainerDropZone({
+    required this.parameters,
+    required this.lists,
+    required this.height,
+  });
+
+  @override
+  State<StatefulWidget> createState() => _ContainerDropZoneState();
+}
+
+class _ContainerDropZoneState extends State<_ContainerDropZone> {
+  DragAndDropItem? _hoveredDraggable;
+
+  /// Find the indices of an item in the lists
+  _ItemIndices _findItemIndices(DragAndDropItem item) {
+    for (int listIndex = 0; listIndex < widget.lists.length; listIndex++) {
+      final list = widget.lists[listIndex];
+      if (list.children != null) {
+        for (int itemIndex = 0;
+            itemIndex < list.children!.length;
+            itemIndex++) {
+          if (list.children![itemIndex] == item) {
+            return _ItemIndices(itemIndex, listIndex);
+          }
+        }
+      }
+    }
+    return const _ItemIndices(-1, -1); // Not found
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Show minimal space when not hovering, expand when item is dragged over
+    final height = _hoveredDraggable != null ? widget.height : 8.0;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      height: height,
+      child: DragTarget<DragAndDropItem>(
+        builder: (context, candidateData, rejectedData) {
+          return SizedBox(
+            height: height,
+            width: double.infinity,
+            child: Container(),
+          );
+        },
+        onWillAcceptWithDetails: (details) {
+          bool accept = true;
+          if (widget.parameters.containerItemOnWillAccept != null) {
+            final indices = _findItemIndices(details.data);
+            accept = widget.parameters.containerItemOnWillAccept!(
+                details.data, indices.itemIndex, indices.listIndex);
+          }
+          if (accept && mounted) {
+            setState(() {
+              _hoveredDraggable = details.data;
+            });
+          }
+          return accept;
+        },
+        onLeave: (data) {
+          if (mounted) {
+            setState(() {
+              _hoveredDraggable = null;
+            });
+          }
+        },
+        onAcceptWithDetails: (details) {
+          if (mounted) {
+            setState(() {
+              if (widget.parameters.onItemDropOnContainer != null) {
+                final indices = _findItemIndices(details.data);
+                widget.parameters.onItemDropOnContainer!(
+                    details.data, indices.itemIndex, indices.listIndex);
+              }
+              _hoveredDraggable = null;
+            });
+          }
+        },
+      ),
+    );
   }
 }
