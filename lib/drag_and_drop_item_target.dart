@@ -24,6 +24,31 @@ class _DragAndDropItemTarget extends State<DragAndDropItemTarget>
     with TickerProviderStateMixin {
   DragAndDropItem? _hoveredDraggable;
 
+  /// Get the effective animation duration for the hovered item.
+  /// Returns the item's specific duration if set, otherwise the global default.
+  Duration _getEffectiveAnimationDuration() {
+    return _hoveredDraggable?.sizeAnimationDuration ??
+        Duration(milliseconds: widget.parameters.itemSizeAnimationDuration);
+  }
+
+  /// Build an animated or static widget based on animation duration.
+  /// If duration is zero, returns a static widget to avoid animation issues.
+  Widget _buildAnimatedOrStaticSize({
+    required Duration duration,
+    required AlignmentGeometry alignment,
+    required Widget child,
+  }) {
+    if (duration == Duration.zero) {
+      return child;
+    } else {
+      return AnimatedSize(
+        duration: duration,
+        alignment: alignment,
+        child: child,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -31,9 +56,8 @@ class _DragAndDropItemTarget extends State<DragAndDropItemTarget>
         Column(
           crossAxisAlignment: widget.parameters.verticalAlignment,
           children: <Widget>[
-            AnimatedSize(
-              duration: Duration(
-                  milliseconds: widget.parameters.itemSizeAnimationDuration),
+            _buildAnimatedOrStaticSize(
+              duration: _getEffectiveAnimationDuration(),
               alignment: Alignment.bottomCenter,
               child: _hoveredDraggable != null
                   ? Opacity(
@@ -55,8 +79,8 @@ class _DragAndDropItemTarget extends State<DragAndDropItemTarget>
             onWillAcceptWithDetails: (details) {
               bool accept = true;
               if (widget.parameters.itemTargetOnWillAccept != null) {
-                accept =
-                    widget.parameters.itemTargetOnWillAccept!(details.data, widget);
+                accept = widget.parameters.itemTargetOnWillAccept!(
+                    details.data, widget);
               }
               if (accept && mounted) {
                 setState(() {

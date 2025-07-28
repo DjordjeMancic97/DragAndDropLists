@@ -21,6 +21,31 @@ class _DragAndDropItemWrapper extends State<DragAndDropItemWrapper>
   Size _containerSize = Size.zero;
   Size _dragHandleSize = Size.zero;
 
+  /// Get the effective animation duration for this item.
+  /// Returns the item's specific duration if set, otherwise the global default.
+  Duration _getEffectiveAnimationDuration() {
+    return widget.child.sizeAnimationDuration ??
+        Duration(milliseconds: widget.parameters!.itemSizeAnimationDuration);
+  }
+
+  /// Build an animated or static widget based on animation duration.
+  /// If duration is zero, returns a static widget to avoid animation issues.
+  Widget _buildAnimatedOrStaticSize({
+    required Duration duration,
+    required AlignmentGeometry alignment,
+    required Widget child,
+  }) {
+    if (duration == Duration.zero) {
+      return child;
+    } else {
+      return AnimatedSize(
+        duration: duration,
+        alignment: alignment,
+        child: child,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget draggable;
@@ -173,9 +198,8 @@ class _DragAndDropItemWrapper extends State<DragAndDropItemWrapper>
         );
       }
     } else {
-      draggable = AnimatedSize(
-        duration: Duration(
-            milliseconds: widget.parameters!.itemSizeAnimationDuration),
+      draggable = _buildAnimatedOrStaticSize(
+        duration: _getEffectiveAnimationDuration(),
         alignment: Alignment.bottomCenter,
         child: _hoveredDraggable != null ? Container() : widget.child.child,
       );
@@ -186,9 +210,8 @@ class _DragAndDropItemWrapper extends State<DragAndDropItemWrapper>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: widget.parameters!.verticalAlignment,
           children: <Widget>[
-            AnimatedSize(
-              duration: Duration(
-                  milliseconds: widget.parameters!.itemSizeAnimationDuration),
+            _buildAnimatedOrStaticSize(
+              duration: _getEffectiveAnimationDuration(),
               alignment: Alignment.topLeft,
               child: _hoveredDraggable != null
                   ? Opacity(
@@ -236,7 +259,8 @@ class _DragAndDropItemWrapper extends State<DragAndDropItemWrapper>
               if (mounted) {
                 setState(() {
                   if (widget.parameters!.onItemReordered != null) {
-                    widget.parameters!.onItemReordered!(details.data, widget.child);
+                    widget.parameters!.onItemReordered!(
+                        details.data, widget.child);
                   }
                   _hoveredDraggable = null;
                 });

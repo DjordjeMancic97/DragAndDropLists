@@ -23,6 +23,31 @@ class _DragAndDropListWrapper extends State<DragAndDropListWrapper>
   Size _containerSize = Size.zero;
   Size _dragHandleSize = Size.zero;
 
+  /// Get the effective animation duration for the hovered list.
+  /// Returns the list's specific duration if set, otherwise the global default.
+  Duration _getEffectiveAnimationDuration() {
+    return _hoveredDraggable?.sizeAnimationDuration ??
+        Duration(milliseconds: widget.parameters.listSizeAnimationDuration);
+  }
+
+  /// Build an animated or static widget based on animation duration.
+  /// If duration is zero, returns a static widget to avoid animation issues.
+  Widget _buildAnimatedOrStaticSize({
+    required Duration duration,
+    required AlignmentGeometry alignment,
+    required Widget child,
+  }) {
+    if (duration == Duration.zero) {
+      return child;
+    } else {
+      return AnimatedSize(
+        duration: duration,
+        alignment: alignment,
+        child: child,
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -117,9 +142,8 @@ class _DragAndDropListWrapper extends State<DragAndDropListWrapper>
     }
 
     var rowOrColumnChildren = <Widget>[
-      AnimatedSize(
-        duration:
-            Duration(milliseconds: widget.parameters.listSizeAnimationDuration),
+      _buildAnimatedOrStaticSize(
+        duration: _getEffectiveAnimationDuration(),
         alignment: widget.parameters.axis == Axis.vertical
             ? Alignment.bottomCenter
             : Alignment.centerLeft,

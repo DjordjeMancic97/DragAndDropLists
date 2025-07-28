@@ -54,6 +54,13 @@ class DragAndDropList implements DragAndDropListInterface {
   /// Set to false if it must remain fixed.
   @override
   final bool canDrag;
+
+  /// Duration of animation for the change in list size when displaying list ghost.
+  /// If null, uses the global default from DragAndDropLists.
+  /// Set to Duration.zero to disable animation for this list.
+  @override
+  final Duration? sizeAnimationDuration;
+
   @override
   final Key? key;
   DragAndDropList({
@@ -69,6 +76,7 @@ class DragAndDropList implements DragAndDropListInterface {
     this.horizontalAlignment = MainAxisAlignment.start,
     this.verticalAlignment = CrossAxisAlignment.start,
     this.canDrag = true,
+    this.sizeAnimationDuration,
     this.listFeedback,
     this.margin,
   });

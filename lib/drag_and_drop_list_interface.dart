@@ -10,6 +10,12 @@ abstract class DragAndDropListInterface implements DragAndDropInterface {
   /// Set to true if it can be reordered.
   /// Set to false if it must remain fixed.
   bool get canDrag;
+
+  /// Duration of animation for the change in list size when displaying list ghost.
+  /// If null, uses the global default from DragAndDropLists.
+  /// Set to Duration.zero to disable animation for this list.
+  Duration? get sizeAnimationDuration;
+
   Key? get key;
   Material? get listFeedback;
   EdgeInsetsGeometry? margin;

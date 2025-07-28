@@ -75,6 +75,15 @@ class CustomNavigationDrawer extends StatelessWidget {
                   .pushReplacementNamed('/drag_handle_example');
             },
           ),
+          ListTile(
+            title: const Text('Animation Duration'),
+            leading: const Icon(Icons.animation),
+            onTap: () {
+              Navigator.of(context).pop();
+              Navigator.of(context)
+                  .pushReplacementNamed('/animation_duration_example');
+            },
+          ),
         ],
       ),
     );

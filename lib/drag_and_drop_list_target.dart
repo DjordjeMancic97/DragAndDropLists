@@ -29,13 +29,37 @@ class _DragAndDropListTarget extends State<DragAndDropListTarget>
     with TickerProviderStateMixin {
   DragAndDropListInterface? _hoveredDraggable;
 
+  /// Get the effective animation duration for the hovered list.
+  /// Returns the list's specific duration if set, otherwise the global default.
+  Duration _getEffectiveAnimationDuration() {
+    return _hoveredDraggable?.sizeAnimationDuration ??
+        Duration(milliseconds: widget.parameters.listSizeAnimationDuration);
+  }
+
+  /// Build an animated or static widget based on animation duration.
+  /// If duration is zero, returns a static widget to avoid animation issues.
+  Widget _buildAnimatedOrStaticSize({
+    required Duration duration,
+    required AlignmentGeometry alignment,
+    required Widget child,
+  }) {
+    if (duration == Duration.zero) {
+      return child;
+    } else {
+      return AnimatedSize(
+        duration: duration,
+        alignment: alignment,
+        child: child,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget visibleContents = Column(
       children: <Widget>[
-        AnimatedSize(
-          duration: Duration(
-              milliseconds: widget.parameters.listSizeAnimationDuration),
+        _buildAnimatedOrStaticSize(
+          duration: _getEffectiveAnimationDuration(),
           alignment: widget.parameters.axis == Axis.vertical
               ? Alignment.bottomCenter
               : Alignment.centerLeft,
@@ -82,8 +106,8 @@ class _DragAndDropListTarget extends State<DragAndDropListTarget>
             onWillAcceptWithDetails: (details) {
               bool accept = true;
               if (widget.parameters.listTargetOnWillAccept != null) {
-                accept =
-                    widget.parameters.listTargetOnWillAccept!(details.data, widget);
+                accept = widget.parameters.listTargetOnWillAccept!(
+                    details.data, widget);
               }
               if (accept && mounted) {
                 setState(() {

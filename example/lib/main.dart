@@ -1,3 +1,4 @@
+import 'package:example/animation_duration_example.dart';
 import 'package:example/basic_example.dart';
 import 'package:example/drag_handle_example.dart';
 import 'package:example/drag_into_list_example.dart';
@@ -34,6 +35,8 @@ class MyApp extends StatelessWidget {
         '/drag_into_list_example': (context) => const DragIntoListExample(),
         '/fixed_example': (context) => const FixedExample(),
         '/drag_handle_example': (context) => const DragHandleExample(),
+        '/animation_duration_example': (context) =>
+            const AnimationDurationExample(),
       },
     );
   }

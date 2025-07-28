@@ -36,6 +36,12 @@ class DragAndDropListExpansion implements DragAndDropListExpansionInterface {
   @override
   final bool canDrag;
 
+  /// Duration of animation for the change in list size when displaying list ghost.
+  /// If null, uses the global default from DragAndDropLists.
+  /// Set to Duration.zero to disable animation for this list.
+  @override
+  final Duration? sizeAnimationDuration;
+
   @override
   final Key? key;
 
@@ -65,6 +71,7 @@ class DragAndDropListExpansion implements DragAndDropListExpansionInterface {
     this.lastTarget,
     required this.listKey,
     this.canDrag = true,
+    this.sizeAnimationDuration,
     this.key,
     this.disableTopAndBottomBorders = false,
     this.listFeedback,
